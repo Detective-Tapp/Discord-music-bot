@@ -221,7 +221,7 @@ namespace DiscordbotTest7.Core.Managers
                 return "Woaaah there, I can't skip when nothing is playing.";
             }
 
-            if (player.Vueue.ToList().Count < 1)
+            if (player.Vueue.Count < 1)
             {
                 if (loop) { loop = false; }
                 playlist = null;
@@ -232,6 +232,11 @@ namespace DiscordbotTest7.Core.Managers
 
             try
             {
+                // just in case it somehow makes it through the other statement.
+                if (player.Vueue.Count <= 1)
+                {
+                    if (loop) { loop = false; }
+                }
                 var (skipped, currenTrack) = await player.SkipAsync(); fixVanDeEeuw = true;
                 return $"Skipped: {skipped.Title}\nNow Playing: {currenTrack.Title}";
             }
