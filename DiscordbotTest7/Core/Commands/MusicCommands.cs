@@ -130,6 +130,13 @@ namespace DiscordbotTest7.Core.Commands
         [Command("autoplay")]
         public async Task AutoPlay()
             => await AudioManager.AutoplayAsync();
-        
+
+        [Command("banhim")]
+        public async Task BanHim(string str)
+        {
+            IUser user = (IUser)Context.Guild.Users.Where(i => i.DisplayName == str);
+            Context.Guild.AddBanAsync(user);
+        }
+
     }
 }
