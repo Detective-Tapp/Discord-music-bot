@@ -40,6 +40,7 @@ namespace DiscordbotTest7.Core.Managers
             Console.WriteLine($"[{DateTime.Now}]\t{arg.ToString()}");
             var argPos = 0;
             var message = arg as SocketUserMessage;
+            if (message == null) return;
             var context = new SocketCommandContext(_client, message);
 
             if (message.Author.IsBot || message.Channel is IDMChannel) return;

@@ -63,12 +63,18 @@ namespace DiscordbotTest7.Core.Managers
                     return exception.Message;
                 }
             }
-
+            
             SearchResponse searchResponse = new SearchResponse();
 
             if (searchQuery[0] == 'h' && searchQuery[1] == 't' && searchQuery[2] == 't')
             {
+                
                 searchResponse = await _lavaNode.SearchAsync(Uri.IsWellFormedUriString(searchQuery, UriKind.Absolute) ? SearchType.Direct : SearchType.YouTube, searchQuery);
+                Console.WriteLine(searchResponse.ToString());
+            }
+            else if ((searchQuery[0] == 'D' && searchQuery[1] == ':') || (searchQuery[0] == 'C' && searchQuery[1] == ':'))
+            {
+                searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, searchQuery);
                 Console.WriteLine(searchResponse.ToString());
             }
             else
@@ -90,14 +96,14 @@ namespace DiscordbotTest7.Core.Managers
             if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
             {
                 player.Vueue.Enqueue(searchResponse.Tracks);
-                if (writePlaying)
+                if (writePlaying && player.Vueue.Count >= 1)
                     await channel.SendMessageAsync($"Envueued {searchResponse.Tracks.Count} songs.");
             }
             else
             {
                 var track = searchResponse.Tracks.FirstOrDefault();
                 player.Vueue.Enqueue(track);
-                if (writePlaying)
+                if (writePlaying && player.Vueue.Count >= 1)
                     await channel.SendMessageAsync($"Envueued {track?.Title}\t `{track?.Duration}`");
             }
 
@@ -254,6 +260,12 @@ namespace DiscordbotTest7.Core.Managers
 
             try
             {
+                if (player.Vueue.Count < 1)
+                {
+                    await channel.SendMessageAsync("No tracks in the queue");
+                    return;
+                }
+                    
                 await channel.SendMessageAsync($"Now showing All {player.Vueue.Count} tracks in *'Vueue'*");
                 int i = 0;
                 string formatted = "";
@@ -734,6 +746,90 @@ namespace DiscordbotTest7.Core.Managers
             {
                 return ex.Message;
             }
+        }
+        public static async Task<string> PlayOsuAsync(IGuild guild, ITextChannel textChannel, SocketGuildUser user, int? rolls)
+        {
+            Console.WriteLine("in PlayOsu");
+            if (!_lavaNode.TryGetPlayer(guild, out var player))
+            {
+                var voiceState = user as IVoiceState;
+
+                if (voiceState?.VoiceChannel == null)
+                {
+                    return "You must be connected to a voice channel!";
+                }
+
+                try
+                {
+                    player = await _lavaNode.JoinAsync(voiceState.VoiceChannel, textChannel);
+                }
+                catch (Exception exception)
+                {
+                    return exception.Message;
+                }
+            }
+
+            if (rolls == null) { rolls = 1; }
+
+            string message = "";
+
+            int files = 28252;
+             
+            Random random = new Random();
+
+            IEnumerable<string> d = Directory.EnumerateDirectories("D:\\osu!\\Songs");
+
+            for (int i = 0; i < rolls ; i++)
+            {
+                _lavaNode.TryGetPlayer(guild, out var prayer);
+
+                player = prayer;
+
+                int number = random.Next(files);
+
+                IEnumerable<string> f = Directory.EnumerateFiles(d.ElementAt(number));
+
+                var name = from a in f where a.EndsWith(".mp3") select a;
+
+                SearchResponse searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, name.FirstOrDefault());
+
+                if (searchResponse.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
+                {
+                    continue;
+                }
+
+                if (searchResponse.Tracks.Count < 1)
+                    continue;
+
+                Console.WriteLine(searchResponse.Tracks.First().Url);
+
+                if (player.PlayerState == PlayerState.Playing || player.PlayerState == PlayerState.Paused)
+                {
+                    Console.WriteLine("in PlayOsu - enqueue");
+                    try {
+                        message += $"Enqueued: {((searchResponse.Tracks.FirstOrDefault().Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{searchResponse.Tracks.FirstOrDefault().Duration.ToString().Remove(9)}`\n";
+                        player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
+                    }
+                    catch (Exception ex) { return ex.Message; }
+                }
+                else
+                {
+                    Console.WriteLine("in PlayOsu - play");
+                    try {
+                        player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
+                        player.Vueue.TryDequeue(out LavaTrack track);
+                        await player.PlayAsync(track);
+                        message += $"Now playing: {((track.Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{track.Duration.ToString().Remove(9)}`\n";
+                    }
+                    catch (Exception ex) { return ex.Message; }
+                }
+            }
+
+            if (message.Length >= 1800){
+                return message.Substring(0,1800);
+            }
+
+            return message;
         }
         public static async Task AutoplayAsync()
         {

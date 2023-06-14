@@ -118,7 +118,12 @@ namespace DiscordbotTest7.Core.Commands
             var addGlobalCommand = new SlashCommandBuilder()
                .WithName("add")
                .WithDescription("Adds a or the current track to the currently playing playlist.")
-               .AddOption("querry", ApplicationCommandOptionType.String, "Name of the track or a link", isRequired: false);*/
+               .AddOption("querry", ApplicationCommandOptionType.String, "Name of the track or a link", isRequired: false);
+
+            var playOsuGlobalCommand = new SlashCommandBuilder()
+               .WithName("playosu")
+               .WithDescription("Plays a random osu song from my drive.")
+               .AddOption("rolls", ApplicationCommandOptionType.Integer, "number of songs to queue", isRequired: false);*/
             #endregion
 
             try
@@ -148,18 +153,248 @@ namespace DiscordbotTest7.Core.Commands
                 await _client.CreateGlobalApplicationCommandAsync(listplaylistsGlobalCommand.Build());
                 await _client.CreateGlobalApplicationCommandAsync(clearGlobalCommand.Build());
                 await _client.CreateGlobalApplicationCommandAsync(removeGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(addGlobalCommand.Build());*/
+                await _client.CreateGlobalApplicationCommandAsync(addGlobalCommand.Build());
+                await _client.CreateGlobalApplicationCommandAsync(playOsuGlobalCommand.Build());*/
                 #endregion
             }
             catch (HttpException exception)
             {
-                Console.WriteLine(exception.Message.ToString());
+                Console.WriteLine(exception.Message.ToString());  
             }
         }
         public static async Task SlashCommandHandler(SocketSlashCommand command)
         {
-            await command.RespondAsync($"You executed {command.Data.Name}");
-            if (command.Data.Name == "play")
+            command.DeferAsync(ephemeral: true);
+
+            SocketGuildUser user;
+            IGuild guild;
+            ITextChannel channel;
+
+            try
+            {
+                guild = _client.GetGuild(command.GuildId.Value);
+                user = command.User as SocketGuildUser;
+                channel = command.Channel as ITextChannel;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message); return;
+            }
+
+            Console.WriteLine($"[{DateTime.Now}] \texecuted: {command.Data.Name}");
+
+            switch (command.Data.Name)
+            {
+                case "play":
+                    try
+                    {
+                        string str = await AudioManager.PlayAsync(user, guild, command.Data.Options.First().Value.ToString(), channel);
+                        await command.ModifyOriginalResponseAsync(x => x.Content = str);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                    break;
+
+                case "skip":
+                    if (AudioManager.writePlaying)
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.SkipAsync(guild));
+                    else
+                        await AudioManager.SkipAsync(guild);
+                    break;
+
+                case "pause":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.PauseAsync(guild));
+                    break;
+
+                case "resume":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ResumeAsync(guild));
+                    break;
+
+                case "stop":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.StopAsync(guild));
+                    break;
+
+                case "leave":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.LeaveAsync(guild));
+                    break;
+
+                case "volume":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.VolumeAsync(ushort.Parse(command.Data.Options.First().Value.ToString()), guild));
+                    break;
+
+                case "shuffle":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ShuffleAsync(guild));
+                    break;
+
+                case "seek":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.SeekAsync(command.Data.Options.First().Value.ToString(), guild));
+                    break;
+
+                case "goto":
+                    if (command.Data.Options.First().Value.ToString().Length <= 4)
+                        try
+                        {
+                            int k = Int16.Parse(command.Data.Options.First().Value.ToString());
+                            await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.GotoAsync(guild, k));
+                        }
+                        catch
+                        {
+                            await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.GotoAsync(guild, command.Data.Options.First().Value.ToString()));
+                        }
+
+                    else
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.GotoAsync(guild, command.Data.Options.First().Value.ToString()));
+                    break;
+
+                case "loop":
+                    if (AudioManager.loop)
+                    {
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Disabled looping");
+                        AudioManager.loop = false;
+                        AudioManager.writePlaying = true;
+                    }
+                    else
+                    {
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Enabled looping");
+                        AudioManager.loop = true;
+                        AudioManager.writePlaying = false;
+                    }
+                    break;
+
+                case "loopplaylist":
+                    if (AudioManager.loopPlaylist)
+                    {
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Disabled playlist looping");
+                        AudioManager.loopPlaylist = false;
+                        AudioManager.writePlaying = true;
+                    }
+                    else
+                    {
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Enabled playlist looping");
+                        AudioManager.loopPlaylist = true;
+                        AudioManager.writePlaying = false;
+                    }
+                    break;
+
+                case "verbose":
+                    if (AudioManager.writePlaying)
+                    {
+                        AudioManager.writePlaying = false;
+                        Console.WriteLine(AudioManager.writePlaying);
+                        await command.ModifyOriginalResponseAsync( x => x.Content = "Disabled verbose mode");
+                    }
+                    else
+                    {
+                        AudioManager.writePlaying = true;
+                        Console.WriteLine(AudioManager.writePlaying);
+                        await command.ModifyOriginalResponseAsync(x => x.Content = "Enabled verbose mode");
+                    }
+                    break;
+
+                case "join":
+                    try
+                    {
+                        string str = await AudioManager.JoinAsync(guild, user, channel);
+                        await command.ModifyOriginalResponseAsync(x => x.Content = str );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                    break;
+
+                case "queue":
+                    await command.ModifyOriginalResponseAsync( x => x.Content = "executed queue");
+                    await AudioManager.QueueAsync(guild, channel);
+                    break;
+
+                case "addto":
+                        string? val = null;
+                    Console.WriteLine(command.Data.Options.Count);
+                    if (command.Data.Options.Count > 1)
+                    {
+                        val = command.Data.Options.Last().Value.ToString();
+                        Console.WriteLine(val);
+                    }
+                    await command.ModifyOriginalResponseAsync( x => x.Content = "executet AddTo");
+                    await AudioManager.addtoAsync(guild, channel, command.Data.Options.First().Value.ToString(), val, user);
+                    break;
+
+                case "removefrom":
+                    await command.ModifyOriginalResponseAsync( x => x.Content = "executet RemoveFrom");
+                    await AudioManager.removefromAsync(guild, channel, command.Data.Options.Last().Value.ToString(), command.Data.Options.First().Value.ToString());
+                    break;
+
+                case "playplaylist":
+                    await command.ModifyOriginalResponseAsync( x => x.Content = "executet PlayPlaylist");
+                    await AudioManager.playplaylistAsync(user, guild, channel, command.Data.Options.First().Value.ToString());
+                    break;
+
+                case "createplaylist":
+                    await command.ModifyOriginalResponseAsync( x => x.Content = "executet CreatePlaylist");
+                    await AudioManager.createplaylistAsync(guild, command.Channel as ITextChannel, command.Data.Options.First().Value.ToString());
+                    break;
+
+                case "listplaylist":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ListPlaylists(guild, channel));
+                    break;
+
+                case "remove":
+                    if (command.Data.Options.First().Value.ToString().Length <= 4)
+                        try
+                        {
+                            int j = Int16.Parse(command.Data.Options.First().Value.ToString());
+                            await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.RemoveAsync(guild, j));
+                        }
+                        catch
+                        {
+                            await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.RemoveAsync(guild, command.Data.Options.First().Value.ToString()));
+                        }
+
+                    else
+                        await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.RemoveAsync(guild, command.Data.Options.First().Value.ToString()));
+                    break;
+
+                case "clear":
+                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ClearAsync(guild));
+                    break;
+
+                case "add":
+                    await command.ModifyOriginalResponseAsync(x => x.Content = "executed Add");
+                    await AudioManager.addtoAsync(guild, channel, command.Data.Options.First().Value.ToString(), user);
+                    break;
+
+                case "playosu":
+                    int? i = 1;
+                    try
+                    {
+                        if (command.Data.Options.Count > 0)
+                        {
+                            i = int.Parse(command.Data.Options.FirstOrDefault().Value.ToString());
+                        }
+                        string str = await AudioManager.PlayOsuAsync(guild, channel, user, i);
+                        await command.ModifyOriginalResponseAsync(x => x.Content = str);
+                    }
+                    catch { Console.WriteLine("error in playosu slash handler."); }
+                    break;
+
+                default: Console.WriteLine("could not find command in switch block.");
+                    await command.ModifyOriginalResponseAsync(x => x.Content = "Error 404");
+                    return;
+            }
+            
+            return;
+        }
+    }
+}
+
+
+
+
+/* 
+ * if (command.Data.Name == "play")
             {
                 await command.Channel.SendMessageAsync(await AudioManager.PlayAsync(command.User as SocketGuildUser, _client.GetGuild(command.GuildId.Value), command.Data.Options.First().Value.ToString(), command.Channel as ITextChannel));
             }
@@ -229,6 +464,7 @@ namespace DiscordbotTest7.Core.Commands
                     AudioManager.writePlaying = false;
                 }
             }
+
             if (command.Data.Name == "loopplaylist")
             {
                 if (AudioManager.loopPlaylist)
@@ -244,6 +480,7 @@ namespace DiscordbotTest7.Core.Commands
                     AudioManager.writePlaying = false;
                 }
             }
+
             if (command.Data.Name == "verbose")
             {
                 if (AudioManager.writePlaying)
@@ -318,9 +555,50 @@ namespace DiscordbotTest7.Core.Commands
             {
                 await AudioManager.addtoAsync(_client.GetGuild(command.GuildId.Value), command.Channel as ITextChannel, command.Data.Options.First().Value.ToString(), command.User as SocketGuildUser);
             }
-        }
-    }
-}
+            if (command.Data.Name == "playosu")
+            {
+                int? i = 1;
+                try 
+                {
+                    if (command.Data.Options.Count > 0)
+                    {
+                        i = int.Parse(command.Data.Options.FirstOrDefault().Value.ToString());
+                    }
+                    await command.Channel.SendMessageAsync(await AudioManager.PlayOsuAsync(_client.GetGuild(command.GuildId.Value), command.Channel as ITextChannel, command.User as SocketGuildUser, i));
+                }
+                catch { Console.WriteLine("error in playosu slash handler."); }
+                 
+            }
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
