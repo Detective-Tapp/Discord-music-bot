@@ -43,7 +43,7 @@ namespace DiscordbotTest7.Core
             collection.AddLavaNode(x =>
             {
                 x.SelfDeaf = false;
-                x.SocketConfiguration = new Victoria.WebSocket.WebSocketConfiguration { BufferSize = 1024 };
+                x.SocketConfiguration = new Victoria.WebSocket.WebSocketConfiguration { BufferSize = 1200 };
             });
             
 

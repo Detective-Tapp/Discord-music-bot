@@ -96,14 +96,14 @@ namespace DiscordbotTest7.Core.Managers
             if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
             {
                 player.Vueue.Enqueue(searchResponse.Tracks);
-                if (writePlaying || player.Vueue.Count >= 1)
+                if (writePlaying && player.Vueue.Count >= 1)
                     await channel.SendMessageAsync($"Envueued {searchResponse.Tracks.Count} songs.");
             }
             else
             {
                 var track = searchResponse.Tracks.FirstOrDefault();
                 player.Vueue.Enqueue(track);
-                if (writePlaying || player.Vueue.Count >= 1)
+                if (writePlaying && player.Vueue.Count >= 1)
                     await channel.SendMessageAsync($"Envueued {track?.Title}\t `{track?.Duration}`");
             }
 
@@ -747,7 +747,6 @@ namespace DiscordbotTest7.Core.Managers
                 return ex.Message;
             }
         }
-
         public static async Task<string> PlayOsuAsync(IGuild guild, ITextChannel textChannel, SocketGuildUser user, int? rolls)
         {
             Console.WriteLine("in PlayOsu");
@@ -808,7 +807,7 @@ namespace DiscordbotTest7.Core.Managers
                 {
                     Console.WriteLine("in PlayOsu - enqueue");
                     try {
-                        message += $"Enqueued: {((searchResponse.Tracks.FirstOrDefault().Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{searchResponse.Tracks.FirstOrDefault().Duration}`\n";
+                        message += $"Enqueued: {((searchResponse.Tracks.FirstOrDefault().Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{searchResponse.Tracks.FirstOrDefault().Duration.ToString().Remove(9)}`\n";
                         player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
                     }
                     catch (Exception ex) { return ex.Message; }
@@ -820,7 +819,7 @@ namespace DiscordbotTest7.Core.Managers
                         player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
                         player.Vueue.TryDequeue(out LavaTrack track);
                         await player.PlayAsync(track);
-                        message += $"Now playing: {((track.Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{track.Duration}`\n";
+                        message += $"Now playing: {((track.Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{track.Duration.ToString().Remove(9)}`\n";
                     }
                     catch (Exception ex) { return ex.Message; }
                 }
@@ -832,7 +831,6 @@ namespace DiscordbotTest7.Core.Managers
 
             return message;
         }
-
         public static async Task AutoplayAsync()
         {
             _lavaNode.OnTrackEnd += TrackEnded;
