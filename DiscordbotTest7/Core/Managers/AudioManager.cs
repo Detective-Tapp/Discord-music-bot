@@ -781,17 +781,23 @@ namespace DiscordbotTest7.Core.Managers
 
             for (int i = 0; i < rolls ; i++)
             {
-                _lavaNode.TryGetPlayer(guild, out var prayer);
-
-                player = prayer;
-
                 int number = random.Next(files);
 
                 IEnumerable<string> f = Directory.EnumerateFiles(d.ElementAt(number));
 
                 var name = from a in f where a.EndsWith(".mp3") select a;
 
-                SearchResponse searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, name.FirstOrDefault());
+                SearchResponse searchResponse = new SearchResponse();
+
+                try
+                {
+                    searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, name.FirstOrDefault());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[{DateTime.Now}] \t{ex.Message}");
+                    continue;
+                }
 
                 if (searchResponse.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
                 {

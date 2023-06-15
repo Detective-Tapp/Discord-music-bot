@@ -194,14 +194,17 @@ namespace DiscordbotTest7.Core.Commands
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
+                        await command.ModifyOriginalResponseAsync(x => x.Content = "Error, sorry bout that.");
                     }
                     break;
 
                 case "skip":
                     if (AudioManager.writePlaying)
                         await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.SkipAsync(guild));
-                    else
-                        await AudioManager.SkipAsync(guild);
+                    else { 
+                    await AudioManager.SkipAsync(guild);
+                    await command.ModifyOriginalResponseAsync(x => x.Content = "Executed skip.");
+                    }
                     break;
 
                 case "pause":
@@ -302,6 +305,7 @@ namespace DiscordbotTest7.Core.Commands
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
+                        await command.ModifyOriginalResponseAsync(x => x.Content = "Error, sorry bout that.");
                     }
                     break;
 
@@ -377,7 +381,8 @@ namespace DiscordbotTest7.Core.Commands
                         string str = await AudioManager.PlayOsuAsync(guild, channel, user, i);
                         await command.ModifyOriginalResponseAsync(x => x.Content = str);
                     }
-                    catch { Console.WriteLine("error in playosu slash handler."); }
+                    catch { Console.WriteLine($"[{DateTime.Now}]error in playosu slash handler."); 
+                        await command.ModifyOriginalResponseAsync(x => x.Content = "Unknown error, sorry bout that"); }
                     break;
 
                 default: Console.WriteLine("could not find command in switch block.");
