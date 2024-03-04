@@ -12,7 +12,8 @@ namespace DiscordbotTest7.Core.Managers
 {
     public static class AudioManager
     {
-        static IEnumerable<string> songsFolder = Directory.EnumerateDirectories("D:\\osu!\\Songs");
+        static IEnumerable<string>? songsFolder;
+        
         public static string? playlist { get; private set; }
         public static bool writePlaying { get; set; }
         public static bool loopPlaylist { get; set; }
@@ -762,6 +763,20 @@ namespace DiscordbotTest7.Core.Managers
         public static async Task<string> PlayOsuAsync(IGuild guild, ITextChannel textChannel, SocketGuildUser user, int? rolls)
         {
             Console.WriteLine("in PlayOsu");
+
+            if (songsFolder == null)
+            {
+                try
+                {
+                    songsFolder = Directory.EnumerateDirectories("D:\\osu!\\Songs");
+                }
+                catch (Exception)
+                {
+                    return "Host has no songsfolder.";
+                }
+            }
+
+
             // check if player is connected and connect if not.
             if (!_lavaNode.TryGetPlayer(guild, out var player))
             {
