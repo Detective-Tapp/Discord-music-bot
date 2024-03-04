@@ -13,153 +13,158 @@ namespace DiscordbotTest7.Core.Commands
         private static DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
         public static async Task Client_Ready()
         {
-            #region Global Command Inits
-            /*
-            var clearGlobalCommand = new SlashCommandBuilder()
-               .WithName("clear")
-               .WithDescription("Clears the queue");
+            var commands = await _client.GetGlobalApplicationCommandsAsync();
 
-            var removeGlobalCommand = new SlashCommandBuilder()
-               .WithName("remove")
-               .WithDescription("Removes a track from the queue")
-               .AddOption("querry", ApplicationCommandOptionType.String, "the position or name of the track", isRequired: true);
-
-            
-            var listplaylistsGlobalCommand = new SlashCommandBuilder()
-               .WithName("listplaylists")
-               .WithDescription("Lists all the playlists of this server");
-            
-            var playGlobalCommand = new SlashCommandBuilder()
-               .WithName("play")
-               .WithDescription("Searches for or plays the track")
-               .AddOption("querry", ApplicationCommandOptionType.String, "the link or name of the track", isRequired: true).Build();
-            
-            var skipGlobalCommand = new SlashCommandBuilder()
-               .WithName("skip")
-               .WithDescription("Skips to the next track in queue");
-            
-            var pauseGlobalCommand = new SlashCommandBuilder()
-               .WithName("pause")
-               .WithDescription("Pauses the player");
-            
-            var seekGlobalCommand = new SlashCommandBuilder()
-               .WithName("seek")
-               .WithDescription("Seeks a position in the track")
-               .AddOption("time", ApplicationCommandOptionType.String, "hour:minute:second time format [00:00:00]", isRequired: true);
-
-            var stopGlobalCommand = new SlashCommandBuilder()
-               .WithName("stop")
-               .WithDescription("Stops the player");
-
-            var shuffleGlobalCommand = new SlashCommandBuilder()
-               .WithName("shuffle")
-               .WithDescription("Shuffles the queue");
-
-            var resumeGlobalCommand = new SlashCommandBuilder()
-               .WithName("resume")
-               .WithDescription("Resumes the player");
-
-            var loopGlobalCommand = new SlashCommandBuilder()
-               .WithName("loop")
-               .WithDescription("Loops the current track");
-
-            var loopPlaylistGlobalCommand = new SlashCommandBuilder()
-               .WithName("loopplaylist")
-               .WithDescription("Loops the whole queue");
-
-            var verboseGlobalCommand = new SlashCommandBuilder()
-               .WithName("verbose")
-               .WithDescription("Toggles printing current track in channel");
-
-            var joinGlobalCommand = new SlashCommandBuilder()
-               .WithName("join")
-               .WithDescription("Joins the VC");
-
-            var queueuGlobalCommand = new SlashCommandBuilder()
-               .WithName("queue")
-               .WithDescription("Prints all tracks in the queue");
-
-            var leaveGlobalCommand = new SlashCommandBuilder()
-               .WithName("leave")
-               .WithDescription("Leaves the VC");
-
-            var volumeGlobalCommand = new SlashCommandBuilder()
-               .WithName("volume")
-               .WithDescription("Sets the Volume of the player")
-               .AddOption("volume", ApplicationCommandOptionType.Integer, "A value of 0 to 1000", isRequired: true);
-
-            var gotoGlobalCommand = new SlashCommandBuilder()
-               .WithName("goto")
-               .WithDescription("Goes to a certain track or position in the queue")
-               .AddOption("track", ApplicationCommandOptionType.String, "Name or position of the Track", isRequired: false);
-            
-            var addtoGlobalCommand = new SlashCommandBuilder()
-               .WithName("addto")
-               .WithDescription("Adds a certain track to A or The specified playlist")
-               .AddOption("querry", ApplicationCommandOptionType.String, "the link or name of the track", isRequired: false)
-               .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
-
-            var removefromGlobalCommand = new SlashCommandBuilder()
-               .WithName("removefrom")
-               .WithDescription("Removes a certain track from playlist")
-               .AddOption("querry", ApplicationCommandOptionType.String, "the link or name of the track", isRequired: true)
-               .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
-
-            var playplaylistGlobalCommand = new SlashCommandBuilder()
-               .WithName("playplaylist")
-               .WithDescription("Queues up a playlist")
-               .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
-
-            var createplaylistGlobalCommand = new SlashCommandBuilder()
-               .WithName("createplaylist")
-               .WithDescription("Creates a playlist")
-               .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
-            
-            var addGlobalCommand = new SlashCommandBuilder()
-               .WithName("add")
-               .WithDescription("Adds a or the current track to the currently playing playlist.")
-               .AddOption("querry", ApplicationCommandOptionType.String, "Name of the track or a link", isRequired: false);
-
-            var playOsuGlobalCommand = new SlashCommandBuilder()
-               .WithName("playosu")
-               .WithDescription("Plays a random osu song from my drive.")
-               .AddOption("rolls", ApplicationCommandOptionType.Integer, "number of songs to queue", isRequired: false);*/
-            #endregion
-
-            try
+            if (commands.Count < 24)
             {
-                #region Global Command Builds
-                /*
-                await _client.CreateGlobalApplicationCommandAsync(playGlobalCommand);
-                await _client.CreateGlobalApplicationCommandAsync(skipGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(joinGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(gotoGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(pauseGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(queueuGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(resumeGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(loopGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(loopPlaylistGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(stopGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(volumeGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(seekGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(verboseGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(leaveGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(addtoGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(shuffleGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(addtoGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(createplaylistGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(removefromGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(playplaylistGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(listplaylistsGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(clearGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(removeGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(addGlobalCommand.Build());
-                await _client.CreateGlobalApplicationCommandAsync(playOsuGlobalCommand.Build());*/
+                #region Global Command Inits
+
+                var clearGlobalCommand = new SlashCommandBuilder()
+                   .WithName("clear")
+                   .WithDescription("Clears the queue");
+
+                var removeGlobalCommand = new SlashCommandBuilder()
+                   .WithName("remove")
+                   .WithDescription("Removes a track from the queue")
+                   .AddOption("querry", ApplicationCommandOptionType.String, "the position or name of the track", isRequired: true);
+
+
+                var listplaylistsGlobalCommand = new SlashCommandBuilder()
+                   .WithName("listplaylists")
+                   .WithDescription("Lists all the playlists of this server");
+
+                var playGlobalCommand = new SlashCommandBuilder()
+                   .WithName("play")
+                   .WithDescription("Searches for or plays the track")
+                   .AddOption("querry", ApplicationCommandOptionType.String, "the link or name of the track", isRequired: true).Build();
+
+                var skipGlobalCommand = new SlashCommandBuilder()
+                   .WithName("skip")
+                   .WithDescription("Skips to the next track in queue");
+
+                var pauseGlobalCommand = new SlashCommandBuilder()
+                   .WithName("pause")
+                   .WithDescription("Pauses the player");
+
+                var seekGlobalCommand = new SlashCommandBuilder()
+                   .WithName("seek")
+                   .WithDescription("Seeks a position in the track")
+                   .AddOption("time", ApplicationCommandOptionType.String, "hour:minute:second time format [00:00:00]", isRequired: true);
+
+                var stopGlobalCommand = new SlashCommandBuilder()
+                   .WithName("stop")
+                   .WithDescription("Stops the player");
+
+                var shuffleGlobalCommand = new SlashCommandBuilder()
+                   .WithName("shuffle")
+                   .WithDescription("Shuffles the queue");
+
+                var resumeGlobalCommand = new SlashCommandBuilder()
+                   .WithName("resume")
+                   .WithDescription("Resumes the player");
+
+                var loopGlobalCommand = new SlashCommandBuilder()
+                   .WithName("loop")
+                   .WithDescription("Loops the current track");
+
+                var loopPlaylistGlobalCommand = new SlashCommandBuilder()
+                   .WithName("loopplaylist")
+                   .WithDescription("Loops the whole queue");
+
+                var verboseGlobalCommand = new SlashCommandBuilder()
+                   .WithName("verbose")
+                   .WithDescription("Toggles printing current track in channel");
+
+                var joinGlobalCommand = new SlashCommandBuilder()
+                   .WithName("join")
+                   .WithDescription("Joins the VC");
+
+                var queueuGlobalCommand = new SlashCommandBuilder()
+                   .WithName("queue")
+                   .WithDescription("Prints all tracks in the queue");
+
+                var leaveGlobalCommand = new SlashCommandBuilder()
+                   .WithName("leave")
+                   .WithDescription("Leaves the VC");
+
+                var volumeGlobalCommand = new SlashCommandBuilder()
+                   .WithName("volume")
+                   .WithDescription("Sets the Volume of the player")
+                   .AddOption("volume", ApplicationCommandOptionType.Integer, "A value of 0 to 1000", isRequired: true);
+
+                var gotoGlobalCommand = new SlashCommandBuilder()
+                   .WithName("goto")
+                   .WithDescription("Goes to a certain track or position in the queue")
+                   .AddOption("track", ApplicationCommandOptionType.String, "Name or position of the Track", isRequired: false);
+
+                var addtoGlobalCommand = new SlashCommandBuilder()
+                   .WithName("addto")
+                   .WithDescription("Adds a certain track to A or The specified playlist")
+                   .AddOption("querry", ApplicationCommandOptionType.String, "the link or name of the track", isRequired: false)
+                   .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
+
+                var removefromGlobalCommand = new SlashCommandBuilder()
+                   .WithName("removefrom")
+                   .WithDescription("Removes a certain track from playlist")
+                   .AddOption("querry", ApplicationCommandOptionType.String, "the link or name of the track", isRequired: true)
+                   .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
+
+                var playplaylistGlobalCommand = new SlashCommandBuilder()
+                   .WithName("playplaylist")
+                   .WithDescription("Queues up a playlist")
+                   .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
+
+                var createplaylistGlobalCommand = new SlashCommandBuilder()
+                   .WithName("createplaylist")
+                   .WithDescription("Creates a playlist")
+                   .AddOption("playlist", ApplicationCommandOptionType.String, "Name of the playlist", isRequired: true);
+
+                var addGlobalCommand = new SlashCommandBuilder()
+                   .WithName("add")
+                   .WithDescription("Adds a or the current track to the currently playing playlist.")
+                   .AddOption("querry", ApplicationCommandOptionType.String, "Name of the track or a link", isRequired: false);
+
+                var playOsuGlobalCommand = new SlashCommandBuilder()
+                   .WithName("playosu")
+                   .WithDescription("Plays a random osu song from my drive.")
+                   .AddOption("rolls", ApplicationCommandOptionType.Integer, "number of songs to queue", isRequired: false);
                 #endregion
-            }
-            catch (HttpException exception)
-            {
-                Console.WriteLine(exception.Message.ToString());  
+
+                try
+                {
+                    #region Global Command Builds
+
+                    await _client.CreateGlobalApplicationCommandAsync(playGlobalCommand);
+                    await _client.CreateGlobalApplicationCommandAsync(skipGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(joinGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(gotoGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(pauseGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(queueuGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(resumeGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(loopGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(loopPlaylistGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(stopGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(volumeGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(seekGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(verboseGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(leaveGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(addtoGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(shuffleGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(addtoGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(createplaylistGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(removefromGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(playplaylistGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(listplaylistsGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(clearGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(removeGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(addGlobalCommand.Build());
+                    await _client.CreateGlobalApplicationCommandAsync(playOsuGlobalCommand.Build());
+                    #endregion
+                }
+                catch (HttpException exception)
+                {
+                    Console.WriteLine(exception.Message.ToString());
+                }
             }
         }
         public static async Task SlashCommandHandler(SocketSlashCommand command)
