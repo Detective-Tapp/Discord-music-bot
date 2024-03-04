@@ -12,6 +12,7 @@ namespace DiscordbotTest7.Core.Managers
 {
     public static class AudioManager
     {
+        static IEnumerable<string> songsFolder = Directory.EnumerateDirectories("D:\\osu!\\Songs");
         public static string? playlist { get; private set; }
         public static bool writePlaying { get; set; }
         public static bool loopPlaylist { get; set; }
@@ -30,7 +31,20 @@ namespace DiscordbotTest7.Core.Managers
                 if (playlist != null)
                     playlist = null;
                 await _lavaNode.JoinAsync(voiceState.VoiceChannel, channel);
-                return $"Has entered {voiceState.VoiceChannel.Name}";
+                if (await voiceState.VoiceChannel.GetUserAsync(1002994967154802851) != null)
+                    return $"Has entered {voiceState.VoiceChannel.Name}";
+                else
+                {
+                    try
+                    {
+                        await _lavaNode.LeaveAsync(voiceState.VoiceChannel);
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                    return "Failed to join channel.";
+                }
+                    
             }
             catch (Exception ex)
             {
@@ -40,6 +54,7 @@ namespace DiscordbotTest7.Core.Managers
         }
         public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, string searchQuery, ITextChannel channel)
         {
+            string RetMsg = null;
             if (fixVanDeEeuw) fixVanDeEeuw = false;
             if (string.IsNullOrWhiteSpace(searchQuery))
             {
@@ -82,7 +97,6 @@ namespace DiscordbotTest7.Core.Managers
                 searchResponse = await _lavaNode.SearchAsync(SearchType.YouTube, searchQuery);
                 if (searchResponse.Status == SearchStatus.NoMatches)
                 {
-                    await channel.SendMessageAsync("Couldn't find anything on Youtube now trying Soundcloud");
                     searchResponse = await _lavaNode.SearchAsync(SearchType.SoundCloud, searchQuery);
                 }
                 Console.WriteLine(searchResponse.ToString());
@@ -96,20 +110,18 @@ namespace DiscordbotTest7.Core.Managers
             if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
             {
                 player.Vueue.Enqueue(searchResponse.Tracks);
-                if (writePlaying && player.Vueue.Count >= 1)
-                    await channel.SendMessageAsync($"Envueued {searchResponse.Tracks.Count} songs.");
+                RetMsg = ($"Envueued {searchResponse.Tracks.Count} songs.");
             }
             else
             {
                 var track = searchResponse.Tracks.FirstOrDefault();
                 player.Vueue.Enqueue(track);
-                if (writePlaying && player.Vueue.Count >= 1)
-                    await channel.SendMessageAsync($"Envueued {track?.Title}\t `{track?.Duration}`");
+                RetMsg = ($"Envueued {track?.Title}\t `{track?.Duration}`");
             }
 
             if (player.PlayerState is PlayerState.Playing or PlayerState.Paused)
             {
-                return "";
+                return RetMsg;
             }
 
             player.Vueue.TryDequeue(out var lavaTrack);
@@ -750,6 +762,7 @@ namespace DiscordbotTest7.Core.Managers
         public static async Task<string> PlayOsuAsync(IGuild guild, ITextChannel textChannel, SocketGuildUser user, int? rolls)
         {
             Console.WriteLine("in PlayOsu");
+            // check if player is connected and connect if not.
             if (!_lavaNode.TryGetPlayer(guild, out var player))
             {
                 var voiceState = user as IVoiceState;
@@ -768,71 +781,79 @@ namespace DiscordbotTest7.Core.Managers
                     return exception.Message;
                 }
             }
-
+            // if no number of rolls is provided set it to roll once.
             if (rolls == null) { rolls = 1; }
 
             string message = "";
 
-            int files = 28252;
-             
             Random random = new Random();
 
-            IEnumerable<string> d = Directory.EnumerateDirectories("D:\\osu!\\Songs");
-
-            for (int i = 0; i < rolls ; i++)
+            for (int i = 0; i < rolls; i++)
             {
-                int number = random.Next(files);
+                int number = random.Next(songsFolder.Count());
 
-                IEnumerable<string> f = Directory.EnumerateFiles(d.ElementAt(number));
+                IEnumerable<string> f = Directory.EnumerateFiles(songsFolder.ElementAt(number));
 
                 var name = from a in f where a.EndsWith(".mp3") select a;
 
-                SearchResponse searchResponse = new SearchResponse();
-
-                try
+                if (name.Any())
                 {
-                    searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, name.FirstOrDefault());
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[{DateTime.Now}] \t{ex.Message}");
-                    continue;
-                }
+                    SearchResponse searchResponse = new SearchResponse();
 
-                if (searchResponse.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
-                {
-                    continue;
-                }
-
-                if (searchResponse.Tracks.Count < 1)
-                    continue;
-
-                Console.WriteLine(searchResponse.Tracks.First().Url);
-
-                if (player.PlayerState == PlayerState.Playing || player.PlayerState == PlayerState.Paused)
-                {
-                    Console.WriteLine("in PlayOsu - enqueue");
-                    try {
-                        message += $"Enqueued: {((searchResponse.Tracks.FirstOrDefault().Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{searchResponse.Tracks.FirstOrDefault().Duration.ToString().Remove(9)}`\n";
-                        player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
+                    #region error checking the searchresponse
+                    try
+                    {
+                        searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, name.FirstOrDefault());
                     }
-                    catch (Exception ex) { return ex.Message; }
-                }
-                else
-                {
-                    Console.WriteLine("in PlayOsu - play");
-                    try {
-                        player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
-                        player.Vueue.TryDequeue(out LavaTrack track);
-                        await player.PlayAsync(track);
-                        message += $"Now playing: {((track.Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{track.Duration.ToString().Remove(9)}`\n";
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[{DateTime.Now}] \t{ex.Message}");
+                        rolls++;
+                        continue;
                     }
-                    catch (Exception ex) { return ex.Message; }
+
+                    if (searchResponse.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
+                    {
+                        rolls++;
+                        continue;
+                    }
+
+                    if (searchResponse.Tracks.Count < 1)
+                    {
+                        rolls++;
+                        continue;
+                    }
+                    #endregion
+
+                    Console.WriteLine(searchResponse.Tracks.First().Url);
+
+                    // If the player is playing or paused enque the track.
+                    if (player.PlayerState == PlayerState.Playing || player.PlayerState == PlayerState.Paused)
+                    {
+                        try
+                        {
+                            message += $"Enqueued: {((searchResponse.Tracks.FirstOrDefault().Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{searchResponse.Tracks.FirstOrDefault().Duration.ToString().Remove(9)}`\n";
+                            player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
+                        }
+                        catch (Exception ex) { return ex.Message; }
+                    } // else play the track.
+                    else
+                    {
+                        try
+                        {
+                            player.Vueue.Enqueue(searchResponse.Tracks.FirstOrDefault());
+                            player.Vueue.TryDequeue(out LavaTrack track);
+                            await player.PlayAsync(track);
+                            message += $"Now playing: {((track.Url.Split("Songs\\"))[1].Split('\\'))[0]} \t `{track.Duration.ToString().Remove(9)}`\n";
+                        }
+                        catch (Exception ex) { return ex.Message; }
+                    }
                 }
             }
-
-            if (message.Length >= 1800){
-                return message.Substring(0,1800);
+            // break up the message if it is too long.
+            if (message.Length >= 1800)
+            {
+                return message.Substring(0, 1800);
             }
 
             return message;

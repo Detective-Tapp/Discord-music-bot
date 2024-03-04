@@ -164,8 +164,6 @@ namespace DiscordbotTest7.Core.Commands
         }
         public static async Task SlashCommandHandler(SocketSlashCommand command)
         {
-            command.DeferAsync(ephemeral: true);
-
             SocketGuildUser user;
             IGuild guild;
             ITextChannel channel;
@@ -188,54 +186,55 @@ namespace DiscordbotTest7.Core.Commands
                 case "play":
                     try
                     {
-                        string str = await AudioManager.PlayAsync(user, guild, command.Data.Options.First().Value.ToString(), channel);
-                        await command.ModifyOriginalResponseAsync(x => x.Content = str);
+                        await command.RespondAsync(await AudioManager.PlayAsync(user, guild, command.Data.Options.First().Value.ToString(), channel), ephemeral: true);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
-                        await command.ModifyOriginalResponseAsync(x => x.Content = "Error, sorry bout that.");
+                        await command.RespondAsync("Error, sorry bout that.", ephemeral: true);
                     }
                     break;
 
                 case "skip":
                     if (AudioManager.writePlaying)
-                        await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.SkipAsync(guild));
+                        await command.RespondAsync(await AudioManager.SkipAsync(guild), ephemeral: true);
                     else { 
-                    await AudioManager.SkipAsync(guild);
-                    await command.ModifyOriginalResponseAsync(x => x.Content = "Executed skip.");
+                    await command.RespondAsync(await AudioManager.SkipAsync(guild), ephemeral: true);
                     }
                     break;
 
                 case "pause":
-                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.PauseAsync(guild));
+                    await command.RespondAsync(await AudioManager.PauseAsync(guild), ephemeral: true);
                     break;
 
                 case "resume":
-                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ResumeAsync(guild));
+                    await command.RespondAsync(await AudioManager.ResumeAsync(guild), ephemeral: true);
                     break;
 
                 case "stop":
-                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.StopAsync(guild));
+                    await command.RespondAsync(await AudioManager.StopAsync(guild), ephemeral: true);
                     break;
 
                 case "leave":
-                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.LeaveAsync(guild));
+                    await command.RespondAsync(await AudioManager.LeaveAsync(guild), ephemeral: true);
                     break;
 
                 case "volume":
-                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.VolumeAsync(ushort.Parse(command.Data.Options.First().Value.ToString()), guild));
+                    await command.RespondAsync(await AudioManager.VolumeAsync(ushort.Parse(command.Data.Options.First().Value.ToString()), guild), ephemeral: true);
                     break;
 
                 case "shuffle":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ShuffleAsync(guild));
                     break;
 
                 case "seek":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.SeekAsync(command.Data.Options.First().Value.ToString(), guild));
                     break;
 
                 case "goto":
+                    command.DeferAsync(ephemeral: true);
                     if (command.Data.Options.First().Value.ToString().Length <= 4)
                         try
                         {
@@ -254,13 +253,13 @@ namespace DiscordbotTest7.Core.Commands
                 case "loop":
                     if (AudioManager.loop)
                     {
-                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Disabled looping");
+                        await command.RespondAsync("Disabled looping", ephemeral: true);
                         AudioManager.loop = false;
                         AudioManager.writePlaying = true;
                     }
                     else
                     {
-                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Enabled looping");
+                        await command.RespondAsync("Enabled looping", ephemeral: true);
                         AudioManager.loop = true;
                         AudioManager.writePlaying = false;
                     }
@@ -269,13 +268,13 @@ namespace DiscordbotTest7.Core.Commands
                 case "loopplaylist":
                     if (AudioManager.loopPlaylist)
                     {
-                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Disabled playlist looping");
+                        await command.RespondAsync("Disabled playlist looping", ephemeral: true);
                         AudioManager.loopPlaylist = false;
                         AudioManager.writePlaying = true;
                     }
                     else
                     {
-                        await command.ModifyOriginalResponseAsync(async x => x.Content = "Enabled playlist looping");
+                        await command.RespondAsync("Enabled playlist looping", ephemeral: true);
                         AudioManager.loopPlaylist = true;
                         AudioManager.writePlaying = false;
                     }
@@ -286,36 +285,37 @@ namespace DiscordbotTest7.Core.Commands
                     {
                         AudioManager.writePlaying = false;
                         Console.WriteLine(AudioManager.writePlaying);
-                        await command.ModifyOriginalResponseAsync( x => x.Content = "Disabled verbose mode");
+                        await command.RespondAsync("Disabled verbose mode", ephemeral: true);
                     }
                     else
                     {
                         AudioManager.writePlaying = true;
                         Console.WriteLine(AudioManager.writePlaying);
-                        await command.ModifyOriginalResponseAsync(x => x.Content = "Enabled verbose mode");
+                        await command.RespondAsync("Enabled verbose mode", ephemeral: true);
                     }
                     break;
 
                 case "join":
                     try
                     {
-                        string str = await AudioManager.JoinAsync(guild, user, channel);
-                        await command.ModifyOriginalResponseAsync(x => x.Content = str );
+                        await command.RespondAsync(await AudioManager.JoinAsync(guild, user, channel), ephemeral: true);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
-                        await command.ModifyOriginalResponseAsync(x => x.Content = "Error, sorry bout that.");
+                        await command.RespondAsync("Error, sorry bout that.", ephemeral: true);
                     }
                     break;
 
                 case "queue":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync( x => x.Content = "executed queue");
                     await AudioManager.QueueAsync(guild, channel);
                     break;
 
                 case "addto":
-                        string? val = null;
+                    command.DeferAsync(ephemeral: true);
+                    string? val = null;
                     Console.WriteLine(command.Data.Options.Count);
                     if (command.Data.Options.Count > 1)
                     {
@@ -327,25 +327,30 @@ namespace DiscordbotTest7.Core.Commands
                     break;
 
                 case "removefrom":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync( x => x.Content = "executet RemoveFrom");
                     await AudioManager.removefromAsync(guild, channel, command.Data.Options.Last().Value.ToString(), command.Data.Options.First().Value.ToString());
                     break;
 
                 case "playplaylist":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync( x => x.Content = "executet PlayPlaylist");
                     await AudioManager.playplaylistAsync(user, guild, channel, command.Data.Options.First().Value.ToString());
                     break;
 
                 case "createplaylist":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync( x => x.Content = "executet CreatePlaylist");
                     await AudioManager.createplaylistAsync(guild, command.Channel as ITextChannel, command.Data.Options.First().Value.ToString());
                     break;
 
                 case "listplaylist":
+                    command.DeferAsync(ephemeral: true);
                     await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ListPlaylists(guild, channel));
                     break;
 
                 case "remove":
+                    command.DeferAsync(ephemeral: true);
                     if (command.Data.Options.First().Value.ToString().Length <= 4)
                         try
                         {
@@ -362,15 +367,16 @@ namespace DiscordbotTest7.Core.Commands
                     break;
 
                 case "clear":
-                    await command.ModifyOriginalResponseAsync(async x => x.Content = await AudioManager.ClearAsync(guild));
+                    await command.RespondAsync(await AudioManager.ClearAsync(guild), ephemeral: true);
                     break;
 
                 case "add":
-                    await command.ModifyOriginalResponseAsync(x => x.Content = "executed Add");
+                    await command.RespondAsync("executed Add");
                     await AudioManager.addtoAsync(guild, channel, command.Data.Options.First().Value.ToString(), user);
                     break;
 
                 case "playosu":
+                    command.DeferAsync(ephemeral: true);
                     int? i = 1;
                     try
                     {
